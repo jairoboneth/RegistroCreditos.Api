@@ -23,7 +23,7 @@ namespace RegistroCreditos.Api.Migrations
                 columns: new[] { "Id", "CedulaCliente", "ComercialNombre", "FechaRegistro", "NombreCliente", "PlazoMeses", "TasaInteres", "UsuarioId", "ValorCredito" },
                 values: new object[,]
                 {
-                    { new Guid("    "), "1000000001", "Sede Norte", new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Pepito Perez", 10, 2m, 1, 7800000m },
+                    { new Guid("11111111-1111-1111-1111-111111111111"), "1000000001", "Sede Norte", new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Pepito Perez", 10, 2m, 1, 7800000m },
                     { new Guid("22222222-2222-2222-2222-222222222222"), "1000000002", "Sede Sur", new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Maria Perez", 5, 2m, 1, 12500000m },
                     { new Guid("33333333-3333-3333-3333-333333333333"), "1000000003", "Sede Centro", new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Antonio Rodriguez", 5, 2m, 1, 10312673m },
                     { new Guid("44444444-4444-4444-4444-444444444444"), "1000000004", "Sede Este", new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Giselle López", 12, 2m, 1, 8628510m },
