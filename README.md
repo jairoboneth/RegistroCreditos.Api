@@ -1,4 +1,4 @@
-# Registro de Créditos Web API 🚀
+﻿# Registro de Créditos Web API 🚀
 
 Una API REST moderna, escalable y construida en **.NET 10** para la gestión y registro de créditos. 
 Este proyecto fue diseñado con arquitectura **CQRS-lite**, separando claramente las lecturas y escrituras, y asegurando alta calidad a través de principios SOLID y un extenso conjunto de pruebas.
@@ -16,7 +16,7 @@ Este proyecto fue diseñado con arquitectura **CQRS-lite**, separando claramente
 - **Seguridad:** BCrypt (Hashing de contraseñas)
 - **Validación:** FluentValidation
 - **Pruebas:** xUnit, Moq, FluentAssertions
-- **Despliegue:** Docker, GitHub Actions
+- **Despliegue:** Docker, GitHub Actions, Docker Compose
 
 ---
 
@@ -24,70 +24,86 @@ Este proyecto fue diseñado con arquitectura **CQRS-lite**, separando claramente
 
 El proyecto sigue una estructura limpia orientada a dominio simplificado:
 *   **Controladores "Flacos":** Responsables únicamente de enrutar las peticiones HTTP y orquestar llamadas a servicios.
-*   **Servicios (SRP):** Contienen toda la lógica de negocio. Se prohíbe inyectar `DbContext` en los controladores; todo se delega a `ICreditoService`, `ICreditoQueryService`, etc.
+*   **Servicios (SRP):** Contienen toda la lógica de negocio. Se prohíbe inyectar DbContext en los controladores; todo se delega a ICreditoService, ICreditoQueryService, etc.
 *   **CQRS-lite:** Se usa Entity Framework Core para operaciones complejas de escritura (Commands) y control de migraciones. Las operaciones de solo lectura (Queries) se ejecutan a través de Dapper para un rendimiento extremo.
-*   **Background Jobs:** La creación de un crédito dispara un evento encolado (con Coravel) para notificar vía SMTP sin bloquear la respuesta de la API.
+*   **Background Jobs:** La creación de un crédito dispara un evento encolado (con Coravel) para notificar vía Mailgun (Producción) o SMTP/Mailpit (Desarrollo) sin bloquear la respuesta de la API.
 
-*(Si deseas profundizar, revisa la documentación arquitectónica detallada en el archivo `agent.md` en la raíz del proyecto).*
-
----
-
-## ⚙️ Requisitos Previos
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Docker & Docker Compose](https://www.docker.com/) (Para la base de datos PostgreSQL)
-- (Opcional) Mailpit para pruebas locales de SMTP
+*(Si deseas profundizar, revisa la documentación arquitectónica detallada en el archivo gent.md en la raíz del proyecto).*
 
 ---
 
-## 🚀 Inicio Rápido (Local)
+## 📋 Requisitos Previos
+
+- [Docker & Docker Compose](https://www.docker.com/) (Recomendado para correr todo el entorno localmente)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (Si deseas ejecutar/desarrollar por fuera de Docker)
+
+---
+
+## 🐳 Ejecución Completa con Docker Compose (Recomendado)
+
+La forma más rápida y limpia de levantar todo el ecosistema (Base de Datos, Simulador de Correos y API Backend) es usando Docker Compose.
 
 1. **Clona el repositorio**
-   ```bash
+   `ash
    git clone https://github.com/jairoboneth/RegistroCreditos.Api.git
    cd RegistroCreditos.WebApi
-   ```
+   `
 
-2. **Levanta los servicios de infraestructura** (Postgres y Mailpit):
-   Asegúrate de tener un contenedor de Postgres corriendo localmente en el puerto `5432` y con las credenciales configuradas en tu `appsettings.json`.
+2. **Levanta todo el stack**
+   Esto compilará la API y levantará PostgreSQL y Mailpit.
+   `ash
+   docker-compose up -d --build
+   `
 
-3. **Aplica las Migraciones de Base de Datos**
-   El proyecto ya viene con datos semillas (*seeding*) de 10 créditos y 1 usuario de pruebas.
-   ```bash
+3. **Aplica las Migraciones (Solo la primera vez)**
+   Dado que Docker levanta una base de datos en blanco, necesitas ejecutar las migraciones para crear las tablas e insertar los datos semilla (10 créditos y 1 usuario de pruebas).
+   `ash
    cd RegistroCreditos.Api
    dotnet ef database update
-   ```
+   cd ..
+   `
 
-4. **Ejecuta la API**
-   ```bash
+4. **Accede a los servicios**
+   - **Backend API (Swagger):** [http://localhost:8080/swagger](http://localhost:8080/swagger)
+   - **Mailpit (Simulador de correos):** [http://localhost:8025](http://localhost:8025)
+
+   > **¡Importante!** Usa las siguientes credenciales en Swagger (/api/auth/login) para obtener tu token JWT:
+   > *   **Email:** 	est@empresa.com
+   > *   **Password:** Pruebas123!
+
+---
+
+## 💻 Ejecución Manual sin Docker Compose
+
+Si prefieres correr el proyecto directamente con el SDK de .NET:
+
+1. Levanta únicamente los servicios de infraestructura (Postgres en el puerto 5432 y Mailpit en el puerto 1025).
+2. Entra a la carpeta del backend y restaura los paquetes:
+   `ash
+   cd RegistroCreditos.Api
+   dotnet restore
+   dotnet ef database update
+   `
+3. Ejecuta la aplicación:
+   `ash
    dotnet run
-   ```
-
-5. **Prueba en Swagger**
-   Abre tu navegador en `https://localhost:xxxx/swagger`.
-   Utiliza el endpoint `/api/auth/login` con:
-   *   **Email:** `test@empresa.com`
-   *   **Password:** `Pruebas123!`
-   
-   Copia el token devuelto, haz clic en el botón **"Authorize"** e ingresa `Bearer {tu_token}`. ¡Estás listo para consumir los endpoints protegidos!
+   `
 
 ---
 
 ## 🧪 Pruebas Automáticas
 
-El proyecto cuenta con un conjunto extenso de pruebas unitarias etiquetadas con Traits (`[Trait("Category", "Positive")]`, etc.).
-
-Para ejecutar los tests:
-```bash
+El proyecto cuenta con un conjunto extenso de pruebas unitarias. Para ejecutar los tests:
+`ash
 dotnet test
-```
+`
 
 ---
 
-## 📦 Despliegue (CI/CD)
+## 🚀 Despliegue (CI/CD)
 
 El proyecto cuenta con:
 1. Un **Dockerfile** optimizado (multi-stage build) usando imágenes alpinas de .NET 10.
-2. Un pipeline en **GitHub Actions** (`.github/workflows/ci.yml`) que compila y ejecuta todas las pruebas unitarias automáticamente en cada *Push* a la rama `main`.
+2. Un pipeline en **GitHub Actions** (.github/workflows/ci.yml) que compila y ejecuta todas las pruebas unitarias automáticamente en cada *Push* a la rama main.
 
-*(Consulta el archivo `deployment_guide.md` para ver el tutorial paso a paso sobre cómo desplegar en plataformas en la nube como Railway o Render, incluyendo la configuración SMTP de Mailgun).*
+*(Consulta el archivo deployment_guide.md para ver el tutorial paso a paso sobre cómo desplegar en plataformas en la nube como Railway o Render).*

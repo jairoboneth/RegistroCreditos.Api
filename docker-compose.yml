@@ -1,0 +1,61 @@
+﻿version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: registrocreditos_api
+    ports:
+      - "8080:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=FyaCreditos;Username=admin;Password=changeme
+      - Smtp__Host=mailpit
+      - Smtp__Port=1025
+      - Smtp__From=no-reply@registrocreditos.com
+      - Smtp__To=pruebas-local@registrocreditos.com
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - credinet
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: registrocreditos_db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=FyaCreditos
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d FyaCreditos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - credinet
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: registrocreditos_mailpit
+    ports:
+      - "8025:8025" # Interfaz Web
+      - "1025:1025" # Servidor SMTP
+    environment:
+      - MP_MAX_MESSAGES=5000
+    networks:
+      - credinet
+
+networks:
+  credinet:
+    driver: bridge
+
+volumes:
+  pgdata:
